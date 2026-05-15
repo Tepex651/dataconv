@@ -1,0 +1,22 @@
+2025-11-12 18:24:37,074 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:24:37,074 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:25:31,910 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:25:31,910 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:25:36,793 [ERROR] Error writing output file result2.csv2: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/user/Personal/dataconv/src/converter.py", line 41, in run
+    self.writer_fn(self.output_path, data)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not callable
+2025-11-12 18:25:36,793 [ERROR] Error writing output file result2.csv2: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/user/Personal/dataconv/src/converter.py", line 41, in run
+    self.writer_fn(self.output_path, data)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not callable
+2025-11-12 18:28:59,897 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:28:59,897 [INFO] Successfully converted result.json to result2.csv
+2025-11-12 18:31:04,237 [INFO] ✅ Successfully converted result.json to result2.csv
+2025-11-12 18:31:04,237 [INFO] ✅ Successfully converted result.json to result2.csv
+2025-11-12 18:31:37,325 [INFO] ✅ Successfully converted result.json --> result2.csv
+2025-11-12 18:31:37,325 [INFO] ✅ Successfully converted result.json --> result2.csv

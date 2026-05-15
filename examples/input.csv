@@ -1,0 +1,4 @@
+id,name,email,age,active,address.city,address.zip
+1,Alice,alice@example.com,30,true,New York,10001
+2,Bob,bob@example.com,25,false,London,SW1A 1AA
+3,Charlie,charlie@example.com,35,true,,
