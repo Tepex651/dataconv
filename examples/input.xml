@@ -1,0 +1,32 @@
+<rows>
+    <row>
+        <id>1</id>
+        <name>Alice</name>
+        <email>alice@example.com</email>
+        <age>30</age>
+        <active>true</active>
+        <address>
+            <city>New York</city>
+            <zip>10001</zip>
+        </address>
+    </row>
+    <row>
+        <id>2</id>
+        <name>Bob</name>
+        <email>bob@example.com</email>
+        <age>25</age>
+        <active>false</active>
+        <address>
+            <city>London</city>
+            <zip>SW1A 1AA</zip>
+        </address>
+    </row>
+    <row>
+        <id>3</id>
+        <name>Charlie</name>
+        <email>charlie@example.com</email>
+        <age>35</age>
+        <active>true</active>
+        <address />
+    </row>
+</rows>

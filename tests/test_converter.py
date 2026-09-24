@@ -12,6 +12,7 @@ from dataconv.formats.base import get_handler, registered_formats
 from dataconv.formats.csv import CSVFormat
 from dataconv.formats.json import JSONFormat
 from dataconv.formats.ndjson import NDJSONFormat
+from dataconv.formats.xml import XMLFormat
 from dataconv.formats.yaml import YAMLFormat
 from dataconv.utils import UnsupportedFormatError
 
@@ -176,7 +177,7 @@ class TestNDJSON:
     def test_write_ndjson(self, sample_data, tmp_path):
         out = tmp_path / "output.ndjson"
         NDJSONFormat().write(out, sample_data)
-        lines = [l for l in out.read_text().strip().split("\n") if l]
+        lines = [line for line in out.read_text().strip().split("\n") if line]
         assert len(lines) == 2
         assert json.loads(lines[0])["name"] == "Alice"
 
@@ -194,7 +195,7 @@ class TestNDJSON:
         buf = io.StringIO()
         NDJSONFormat().write_stdout(buf, sample_data)
         buf.seek(0)
-        lines = [l for l in buf.read().strip().split("\n") if l]
+        lines = [line for line in buf.read().strip().split("\n") if line]
         assert len(lines) == 2
 
 
@@ -226,6 +227,94 @@ class TestYAML:
         assert "Alice" in text
 
 
+class TestXML:
+    def _doc(self) -> str:
+        return (
+            "<rows>\n"
+            "  <row>\n"
+            "    <id>1</id>\n"
+            "    <name>Alice</name>\n"
+            "    <address>\n"
+            "      <city>NYC</city>\n"
+            "      <zip>10001</zip>\n"
+            "    </address>\n"
+            "  </row>\n"
+            "  <row>\n"
+            "    <id>2</id>\n"
+            "    <name>Bob</name>\n"
+            "  </row>\n"
+            "</rows>\n"
+        )
+
+    def test_read_xml(self, tmp_path):
+        inp = tmp_path / "input.xml"
+        inp.write_text(self._doc())
+        result = XMLFormat().read(inp)
+        assert len(result) == 2
+        assert result[0]["name"] == "Alice"
+        assert result[0]["address"]["city"] == "NYC"
+
+    def test_write_xml(self, sample_data, tmp_path):
+        out = tmp_path / "output.xml"
+        XMLFormat().write(out, sample_data)
+        text = out.read_text()
+        assert "Alice" in text
+        assert "Bob" in text
+
+    def test_roundtrip(self, sample_data, tmp_path):
+        out = tmp_path / "output.xml"
+        XMLFormat().write(out, sample_data)
+        result = XMLFormat().read(out)
+        assert [r["name"] for r in result] == ["Alice", "Bob"]
+
+    def test_repeated_tag_becomes_list(self, tmp_path):
+        inp = tmp_path / "input.xml"
+        inp.write_text("<rows><row><tag>a</tag><tag>b</tag></row></rows>\n")
+        result = XMLFormat().read(inp)
+        assert result[0]["tag"] == ["a", "b"]
+
+    def test_invalid_tag_name_sanitized(self, tmp_path):
+        out = tmp_path / "output.xml"
+        XMLFormat().write(out, [{"key with space": "a", "a+b": "b", "9lives": 9}])
+        text = out.read_text()
+        assert "key_with_space" in text
+        assert "a_b" in text
+        assert "_9lives" in text
+
+    def test_empty_input(self):
+        assert XMLFormat().read_stdin(io.StringIO("")) == []
+
+    def test_read_stdin_xml(self):
+        result = XMLFormat().read_stdin(io.StringIO("<rows><row><name>Alice</name></row></rows>"))
+        assert result[0]["name"] == "Alice"
+
+    def test_write_stdout_xml(self, sample_data):
+        buf = io.StringIO()
+        XMLFormat().write_stdout(buf, sample_data)
+        buf.seek(0)
+        text = buf.read()
+        assert "Alice" in text
+
+    def test_read_autodetect_heterogeneous_root(self):
+        """A single nested record (mixed children) is one row, not unwrapped."""
+        xml_in = "<person><name>Alice</name><address><city>NYC</city></address></person>"
+        result = XMLFormat().read_stdin(io.StringIO(xml_in))
+        assert result == [{"name": "Alice", "address": {"city": "NYC"}}]
+
+    def test_read_autodetect_entity_root(self):
+        """Non-rows wrapper with uniform children is unwrapped into rows."""
+        xml_in = "<users><user><name>Alice</name></user><user><name>Bob</name></user></users>"
+        result = XMLFormat().read_stdin(io.StringIO(xml_in))
+        assert [r["name"] for r in result] == ["Alice", "Bob"]
+
+    def test_write_custom_root_item(self, sample_data, tmp_path):
+        out = tmp_path / "output.xml"
+        XMLFormat(config=Config(xml_root="users", xml_item="user")).write(out, sample_data)
+        text = out.read_text()
+        assert "<users>" in text
+        assert "<user>" in text
+
+
 class TestFormatRegistry:
     def test_registered_formats_includes_all(self):
         fmts = registered_formats()
@@ -233,14 +322,16 @@ class TestFormatRegistry:
         assert ".csv" in fmts
         assert ".ndjson" in fmts
         assert ".yaml" in fmts
+        assert ".xml" in fmts
 
     def test_get_handler_by_extension(self):
         assert isinstance(get_handler(".json"), JSONFormat)
         assert isinstance(get_handler(".csv"), CSVFormat)
+        assert isinstance(get_handler(".xml"), XMLFormat)
 
     def test_unsupported_format_raises(self):
         with pytest.raises(UnsupportedFormatError):
-            get_handler(".xml")
+            get_handler(".xyz")
 
 
 class TestConverterStdinStdout:

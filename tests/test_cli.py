@@ -5,8 +5,6 @@ import logging
 import sys
 from unittest import mock
 
-import pytest
-
 from dataconv.cli import main
 
 
@@ -80,7 +78,7 @@ class TestEndToEnd:
     """Real conversions through the CLI (no mocking)."""
 
     def run_cli(self, args, stdin_text=None):
-        """Helper: run main() with given args and optional stdin, return (exit_code, stdout, stderr)."""
+        """Helper: run main() with args and optional stdin; return (code, stdout, stderr)."""
         stdout_buf = mock.MagicMock()
         stderr_buf = mock.MagicMock()
         old_stdin, old_stdout, old_stderr = sys.stdin, sys.stdout, sys.stderr
@@ -143,8 +141,8 @@ class TestEndToEnd:
 
 class TestVerboseFlag:
     def test_verbose_sets_debug_level(self):
-        basic_configSpy = mock.patch("dataconv.cli.logging.basicConfig")
-        with basic_configSpy as mock_basic:
+        basic_config = mock.patch("dataconv.cli.logging.basicConfig")
+        with basic_config as mock_basic:
             with mock.patch("dataconv.cli.Converter"):
                 sys.argv = ["dataconv", "json", "csv", "--verbose"]
                 main()
@@ -154,8 +152,8 @@ class TestVerboseFlag:
         assert call_kwargs["level"] == logging.DEBUG
 
     def test_without_verbose_sets_warning_level(self):
-        basic_configSpy = mock.patch("dataconv.cli.logging.basicConfig")
-        with basic_configSpy as mock_basic:
+        basic_config = mock.patch("dataconv.cli.logging.basicConfig")
+        with basic_config as mock_basic:
             with mock.patch("dataconv.cli.Converter"):
                 sys.argv = ["dataconv", "json", "csv"]
                 main()

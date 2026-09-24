@@ -11,24 +11,6 @@ from dataconv.formats import registered_formats
 log = logging.getLogger("dataconv")
 
 
-def _is_format(arg: str) -> bool:
-    """Return True if *arg* is a registered format name (no dot, matches registry)."""
-    return "." not in arg and arg in registered_formats()
-
-
-def _resolve(
-    inp: str,
-    out: str,
-) -> tuple[str, str]:
-    """Turn positional args into (input_path_or_fmt, output_path_or_fmt).
-
-    Rules:
-      - Contains ``.`` → file path (format auto-detected from extension).
-      - No ``.`` and a valid format name → format name (stream: stdin/stdout).
-    """
-    return inp, out
-
-
 def main() -> int:
     fmts = ", ".join(registered_formats())
     parser = argparse.ArgumentParser(
@@ -67,7 +49,17 @@ def main() -> int:
         choices=["dotted", "flat"],
         default="dotted",
         help="CSV column naming: dotted=address.city (default), flat=city",
-    )
+     )
+    parser.add_argument(
+        "--xml-root",
+        default="rows",
+        help="XML wrapper element for output (default: rows)",
+     )
+    parser.add_argument(
+        "--xml-item",
+        default="row",
+        help="XML row element for output (default: row)",
+     )
     parser.add_argument(
         "--verbose",
         "-v",
@@ -82,13 +74,15 @@ def main() -> int:
     log_level = logging.DEBUG if args.verbose else logging.WARNING
     logging.basicConfig(level=log_level, format="%(name)s: %(message)s")
 
-    input_path, output_path = _resolve(args.input, args.output)
+    input_path, output_path = args.input, args.output
 
     try:
         config = Config(
             flatten=args.flatten,
             csv_keys=CsvKeys(args.csv_keys),
-        )
+            xml_root=args.xml_root,
+            xml_item=args.xml_item,
+         )
         Converter(
             input_path=input_path,
             output_path=output_path,

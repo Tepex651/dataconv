@@ -15,3 +15,5 @@ class CsvKeys(Enum):
 class Config:
     flatten: bool = False
     csv_keys: CsvKeys = CsvKeys.dotted
+    xml_root: str = "rows"
+    xml_item: str = "row"

@@ -2,7 +2,7 @@
 
 Convert data files between formats with optional Pydantic validation.
 
-**Supported formats:** JSON, CSV, NDJSON (JSONL), YAML
+**Supported formats:** JSON, CSV, NDJSON (JSONL), YAML, XML
 
 ## Install
 
@@ -134,16 +134,18 @@ class RowSchema(BaseModel):
 dataconv [INPUT] [OUTPUT] [OPTIONS]
 
 Positional arguments:
-  input              Input file path (.json, .csv, .ndjson, .yaml) or format name (json, csv, ndjson, yaml) for stdin
+   input              Input file path (.json, .csv, .ndjson, .yaml, .xml) or format name (json, csv, ndjson, yaml, xml) for stdin
   output             Output file path or format name for stdout
 
 Options:
     --schema PATH      Path to Pydantic schema file for validation
     -e, --errors PATH  Path to write invalid rows to
     --flatten          Flatten nested objects in output (default: keep nested)
-    --csv-keys FMT     CSV column naming: dotted=address.city (default), flat=city
-    -v, --verbose      Show warnings and debug info
-    -h, --help         Show this help message
+     --csv-keys FMT     CSV column naming: dotted=address.city (default), flat=city
+      --xml-root NAME   XML wrapper element for output (default: rows)
+      --xml-item NAME   XML row element for output (default: row)
+      -v, --verbose      Show warnings and debug info
+      -h, --help         Show this help message
 ```
 
 ### Positional argument combinations
@@ -169,6 +171,24 @@ One JSON object per line. Comments (lines starting with `#`) are ignored. Malfor
 
 ### YAML (`.yaml`, `.yml`)
 Full YAML documents or streams. Requires `pyyaml` installed.
+
+### XML (`.xml`)
+Nested records wrapped as `<rows><row>…</row></rows>` by default — one `<row>`
+element per record. Fields become child elements; repeated tags collapse to a
+list, and nested dictionaries recurse into nested elements. Namespaces are
+stripped and attribute names are merged under an `@` prefix. Reads are strings
+(like CSV), so type coercion (int/bool) only happens when a schema is supplied.
+Requires no extra dependency (uses the stdlib `xml.etree` module).
+
+**On read** the wrapper is auto-detected: a root whose children are all the same
+element (e.g. `<users><user>…</user></users>`) is unwrapped into rows, while a
+root with heterogeneous children (e.g. `<person><name/><address/></person>`) is
+treated as a single nested record.
+
+**On write** the wrapper names are fixed at `rows`/`row` unless overridden with
+`--xml-root` / `--xml-item` (e.g. `--xml-root users --xml-item user` produces
+`<users><user>…</user></users>`).
+
 
 ## Examples
 
@@ -201,3 +221,16 @@ Convert YAML to NDJSON:
 ```bash
 dataconv data.yaml output.ndjson
 ```
+
+Convert XML to JSON:
+
+```bash
+dataconv data.xml output.json
+```
+
+Write XML with a custom entity name:
+
+```bash
+dataconv data.json data.xml --xml-root users --xml-item user
+```
+
